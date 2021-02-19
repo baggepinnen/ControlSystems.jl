@@ -40,8 +40,8 @@ function c2d(sys::Union{StateSpace{Continuous},HeteroStateSpace{Continuous}}, Ts
         x0map = I(nx)
     elseif method === :tustin
         a > 0 || throw(DomainError("A positive a must be provided for method Tustin"))
-        AI = (I-a*A)
-        Ad = AI\(I+a*A)
+        AI = (I(nx)-a*A)
+        Ad = AI\(I(nx)+a*A)
         Bd = 2a*(AI\B)
         Cd = C/AI
         Dd = a*Cd*B + D
@@ -59,8 +59,8 @@ end
 
 Convert discrete-time system to a continuous time system, assuming that the discrete-time system was discretized using `method`. Available methods are `:zoh, :fwdeuler´.
 """
-function d2c(sys::AbstractStateSpace{<:Discrete}, method::Symbol=:zoh)
-    A, B, Cc, Dc = ssdata(sys)
+function d2c(sys::AbstractStateSpace{<:Discrete}, method::Symbol=:zoh; a=sys.Ts/2)
+    A, B, C, D = ssdata(sys)
     ny, nu = size(sys)
     nx = nstates(sys)
     if method === :zoh
@@ -213,7 +213,7 @@ end
 
 
 """
-`c2d_roots2poly(ro,h)`
+    c2d_roots2poly(ro,h)
 
 returns the polynomial coefficients in discrete time given a vector of roots in continuous time
 """
@@ -222,7 +222,7 @@ function c2d_roots2poly(ro,h)
 end
 
 """
-`c2d_poly2poly(ro,h)`
+    c2d_poly2poly(ro,h)
 
 returns the polynomial coefficients in discrete time given polynomial coefficients in continuous time
 """
@@ -241,7 +241,7 @@ function c2d(G::TransferFunction{<:Continuous}, h, args...; kwargs...)
 end
 
 """
-    zpconv(a,r,b,s)
+    zpc(a,r,b,s)
     
 form conv(a,r) + conv(b,s) where the lengths of the polynomials are equalized by zero-padding such that the addition can be carried out
 """

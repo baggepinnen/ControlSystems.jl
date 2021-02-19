@@ -1,4 +1,6 @@
 
+import Base.getindex
+
 """
     G = LQG(sys::AbstractStateSpace, Q1, Q2, R1, R2; qQ=0, qR=0, integrator=false, M = sys.C)
 
@@ -33,17 +35,17 @@ When the LQG-object is populated by the lqg-function, the following fields have 
 Several other properties of the object are accessible as properties. The available properties are
 (some have many alternative names, separated with / )
 
--`G.cl / G.closedloop` is the closed-loop system, including observer, from reference to output, precompensated to have static gain 1 (`u = −Lx + lᵣr`).
--`G.S / G.Sin` Input sensitivity function
--`G.T / G.Tin` Input complementary sensitivity function
--`G.Sout` Output sensitivity function
--`G.Tout` Output complementary sensitivity function
--`G.CS` The transfer function from measurement noise to control signal
--`G.DS` The transfer function from input load disturbance to output
--`G.lt / G.looptransfer / G.loopgain  =  PC`
--`G.rd / G.returndifference  =  I + PC`
--`G.sr / G.stabilityrobustness  =  I + inv(PC)`
--`G.sysc / G.controller` Returns the controller as a StateSpace-system
+- `G.cl / G.closedloop` is the closed-loop system, including observer, from reference to output, precompensated to have static gain 1 (`u = −Lx + lᵣr`).
+- `G.S / G.Sin` Input sensitivity function
+- `G.T / G.Tin` Input complementary sensitivity function
+- `G.Sout` Output sensitivity function
+- `G.Tout` Output complementary sensitivity function
+- `G.CS` The transfer function from measurement noise to control signal
+- `G.DS` The transfer function from input load disturbance to output
+- `G.lt / G.looptransfer / G.loopgain  =  PC`
+- `G.rd / G.returndifference  =  I + PC`
+- `G.sr / G.stabilityrobustness  =  I + inv(PC)`
+- `G.sysc / G.controller` Returns the controller as a StateSpace-system
 
 It is also possible to access all fileds using the `G.symbol` syntax, the fields are `P,Q1,Q2,R1,R2,qQ,qR,sysc,L,K,integrator`
 
@@ -97,7 +99,7 @@ function LQG(
     qQ = 0,
     qR = 0,
     integrator = false,
-    kwargs...
+    kwargs...,
 )
     integrator ? _LQGi(sys, Q1, Q2, R1, R2, qQ, qR; kwargs...) :
     _LQG(sys, Q1, Q2, R1, R2, qQ, qR; kwargs...)
@@ -112,7 +114,7 @@ function LQG(
     qQ = 0,
     qR = 0,
     integrator = false,
-    kwargs...
+    kwargs...,
 )
     Q1 = diagm(0 => Q1)
     Q2 = diagm(0 => Q2)
@@ -154,7 +156,6 @@ function _LQGi(sys::LTISystem, Q1, Q2, R1, R2, qQ, qR; M = sys.C)
     Be = [B; zeros(m, m)]
     Ce = [C zeros(p, m)]
     De = D
-
 
     L = lqr(A, B, Q1 + qQ * C'C, Q2)
     Le = [L I]
@@ -212,9 +213,9 @@ function Base.getproperty(G::LQG, s::Symbol)
 
     if s ∈ (:cl, :closedloop, :ry) # Closed-loop system
         # Compensate for static gain, pp. 264 G.L.
-        dcg = P.C * ((P.B*L[:,1:n]-P.A) / P.B)
+        dcg = P.C * ((P.B * L[:, 1:n] - P.A) \ P.B)
         Acl = [A-B*L B*L; zero(A) A-K*C]
-        Bcl = [B/dcg; zero(B)]
+        Bcl = [B / dcg; zero(B)]
         Ccl = [M zero(M)]
         # rank(dcg) == size(A,1) && (Bcl = Bcl / dcg) # B*lᵣ # Always normalized with nominal plant static gain
         syscl = ss(Acl, Bcl, Ccl, 0)
@@ -247,21 +248,29 @@ Base.:(==)(G1::LQG, G2::LQG) =
     G1.K == G2.K && G1.L == G2.L && G1.P == G2.P && G1.sysc == G2.sysc
 
 
-
 plot(G::LQG) = gangoffourplot(G)
+
 function gangoffour(G::LQG)
-    return G.S, G.PS, G.CS, G.T
+    G.S, G.PS, G.CS, G.T
 end
 
 function gangoffourplot(G::LQG; kwargs...)
-    S, D, N, T = gangoffour(G)
-    f1 = sigmaplot(S, show = false, kwargs...)
-    Plots.plot!(title = "\$S = 1/(1+PC)\$")
-    f2 = sigmaplot(D, show = false, kwargs...)
-    Plots.plot!(title = "\$D = P/(1+PC)\$")
-    f3 = sigmaplot(N, show = false, kwargs...)
-    Plots.plot!(title = "\$N = C/(1+PC)\$")
-    f4 = sigmaplot(T, show = false, kwargs...)
-    Plots.plot!(title = "\$T = PC/(1+PC\$)")
-    Plots.plot(f1, f2, f3, f4)
+    S,D,N,T = gangoffour(G)
+    f1 = sigmaplot(S, show=false, kwargs...); Plots.plot!(title="\$S = 1/(1+PC)\$")
+    f2 = sigmaplot(D, show=false, kwargs...); Plots.plot!(title="\$D = P/(1+PC)\$")
+    f3 = sigmaplot(N, show=false, kwargs...); Plots.plot!(title="\$N = C/(1+PC)\$")
+    f4 = sigmaplot(T, show=false, kwargs...); Plots.plot!(title="\$T = PC/(1+PC\$)")
+    Plots.plot(f1,f2,f3,f4)
 end
+
+
+
+# function gangoffourplot(G::LQG, args...)
+#     S,D,N,T = gangoffour(G)
+#     fig = subplot(n=4,nc=2)
+#     Plots.plot!(fig[1,1],sigmaplot(S, args...), title="\$S = 1/(1+PC)\$")
+#     Plots.plot!(fig[1,2],sigmaplot(D, args...), title="\$D = P/(1+PC)\$")
+#     Plots.plot!(fig[2,1],sigmaplot(N, args...), title="\$N = C/(1+PC)\$")
+#     Plots.plot!(fig[2,2],sigmaplot(T, args...), title="\$T = PC/(1+PC\$)")
+#     return fig
+# end
