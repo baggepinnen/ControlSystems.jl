@@ -81,7 +81,7 @@ Base.convert(::Type{HeteroStateSpace}, s::StateSpace) = HeteroStateSpace(s)
 Base.convert(::Type{StateSpace}, s::HeteroStateSpace) = StateSpace(s.A, s.B, s.C, s.D, s.Ts)
 Base.convert(::Type{StateSpace}, s::HeteroStateSpace{Continuous}) = StateSpace(s.A, s.B, s.C, s.D)
 
-function Base.convert(::Type{StateSpace}, G::TransferFunction{TE,<:SisoTf{T0}}) where {TE,T0<:Number}
+function Base.convert(::Type{StateSpace}, G::TransferFunction{TE,<:SisoTf{T0}}; kwargs...) where {TE,T0<:Number}
 
     T = Base.promote_op(/,T0,T0)
     convert(StateSpace{TE,T,Matrix{T}}, G; kwargs...)
