@@ -281,8 +281,9 @@ bodeplot
             mag = 20*log10.(mag)
         end
 
-        group_ind = 0
+
         xlab = plotphase ? "" : (hz ? "Frequency [Hz]" : "Frequency [rad/s]")
+        group_ind = 0
         for j=1:nu
             for i=1:ny
                 group_ind += 1
@@ -293,6 +294,7 @@ bodeplot
                 end
                 phasedata = vec(phase[:, i, j])
                 @series begin
+                    grid      --> true
                     yscale    --> _PlotScaleFunc
                     xscale    --> :log10
                     if _PlotScale != "dB"
@@ -309,8 +311,10 @@ bodeplot
                 plotphase || continue
 
                 @series begin
+                    grid      --> true
                     xscale    --> :log10
                     ylims      := ylimsphase
+                    yticks    --> getPhaseTicks(phasedata, getlims(:ylims, plotattributes, phasedata))
                     yguide    --> "Phase (deg)"
                     subplot   --> s2i(2i,j)
                     xguide    --> (hz ? "Frequency [Hz]" : "Frequency [rad/s]")
@@ -366,35 +370,38 @@ end
 
 @userplot Nyquistplot
 """
-    fig = nyquistplot(sys; gaincircles=true, kwargs...)
-    nyquistplot(LTISystem[sys1, sys2...]; gaincircles=true, kwargs...)
+    fig = nyquistplot(sys; gaincircle=false, Ms = 1.5, kwargs...)
+    nyquistplot(LTISystem[sys1, sys2...]; gaincircle=false, kwargs...)
 
 Create a Nyquist plot of the `LTISystem`(s). A frequency vector `w` can be
 optionally provided.
 
-`gaincircles` plots the circles corresponding to |S(iω)| = 1 and |T(iω)| = 1, where S and T are
-the sensitivity and complementary sensitivity functions.
+`gaincircle` plots the circle corresponding to |T(iω)| = 1, where `T` is
+the complementary sensitivity function.
+                                            
+`Ms` denotes a maximum allowed value of the sensitivity function, a circle around -1 will be drawn with `1/Ms` radius. `Ms` can be supplied as a number or a vector of numbers. A design staying outside such a circle has a phase margin of at least `2asin(1/(2Ms))` rad and a gain margin of at least `Ms/(Ms-1)`, which for Ms = 1.5 yields `ϕₘ > 38.9°` and `gₘ > 3`.
 
 `kwargs` is sent as argument to plot.
 """
 nyquistplot
-@recipe function nyquistplot(p::Nyquistplot; gaincircles=true, Ms = 2)
+@recipe function nyquistplot(p::Nyquistplot; gaincircle=false, Ms = 1.5)
     systems, w = _processfreqplot(Val{:nyquist}(), p.args...)
     ny, nu = size(systems[1])
     nw = length(w)
     layout --> (ny,nu)
     framestyle --> :zerolines
-    s2i(i,j) = LinearIndices((ny,nu))[j,i]
-    # Ensure that `axes` is always a matrix of handles
+    s2i(i,j) = LinearIndices((nu,ny))[j,i]
+    v = range(0, stop=2π, length=100)
+    S,C = sin.(v),cos.(v)
     for (si,s) = enumerate(systems)
         re_resp, im_resp = nyquist(s, w)[1:2]
         for j=1:nu
             for i=1:ny
-                redata      = re_resp[:, i, j]
-                imdata      = im_resp[:, i, j]
+                redata = re_resp[:, i, j]
+                imdata = im_resp[:, i, j]
                 @series begin
-                    ylims   --> (min(max(-20,minimum(imdata)),-1), max(min(20,maximum(imdata)),1))
-                    xlims   --> (min(max(-20,minimum(redata)),-1), max(min(20,maximum(redata)),1))
+                    ylims --> (min(max(-20,minimum(imdata)),-1), max(min(20,maximum(imdata)),1))
+                    xlims --> (min(max(-20,minimum(redata)),-1), max(min(20,maximum(redata)),1))
                     title --> "Nyquist plot from: u($j)"
                     yguide --> "To: y($i)"
                     subplot --> s2i(i,j)
@@ -403,27 +410,40 @@ nyquistplot
                     (redata, imdata)
                 end
                 # Plot rings
-                if gaincircles && si == length(systems)
-                    v = range(0,stop=2π,length=100)
-                    S,C = sin.(v),cos.(v)
+                if si == length(systems)
                     @series begin
+                        subplot --> s2i(i,j)
                         primary := false
-                        linestyle := :dash
-                        linecolor := :gray
-                        seriestype := :path
-                        markershape := :none
-                        ((1/Ms).*(C.-2),(1/Ms).*S)
+                        seriescolor := :red
+                        markershape := :cross
+                        seriesstyle := :scatter
+                        [-1], [0]
                     end
-                    @series begin
-                        primary := false
-                        linestyle := :dash
-                        linecolor := :gray
-                        seriestype := :path
-                        markershape := :none
-                        (C,S)
+                    for Ms in Ms
+                        @series begin
+                            subplot --> s2i(i,j)
+                            primary := false
+                            linestyle := :dash
+                            linecolor := :gray
+                            seriestype := :path
+                            markershape := :none
+                            label := "Ms = $(round(Ms, digits=2))"
+                            ((1/Ms).*(C.-Ms),(1/Ms).*S)
+                        end
+                    end
+                    if gaincircle
+                        @series begin
+                            subplot --> s2i(i,j)
+                            primary := false
+                            linestyle := :dash
+                            linecolor := :gray
+                            seriestype := :path
+                            markershape := :none
+                            (C,S)
+                        end
                     end
                 end
-
+                
             end
         end
     end
@@ -746,7 +766,7 @@ pzmap
                 real(z),imag(z)
             end
         end
-        if !isempty(p[1])
+        if !isempty(p)
             @series begin
                 group --> i
                 markershape --> :xcross
