@@ -161,11 +161,6 @@ function lsim(sys::TransferFunction{<:Discrete}, u::AbstractVecOrMat; kwargs...)
     lsim(sys, u, t; kwargs...)
 end
 
-function lsim(sys::AbstractStateSpace, u::Function, t::Real, args...; kwargs...)
-    t = range(0, stop=t, step=sys.Ts)
-    lsim(sys, u, t, args...; kwargs...)
-end
-
 function lsim(sys::AbstractStateSpace, u::Function, Tf::Real, args...; kwargs...)
     t = _default_time_vector(sys, Tf)
     lsim(sys, u, t, args...; kwargs...)
