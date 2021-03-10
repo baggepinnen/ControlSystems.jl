@@ -12,17 +12,17 @@ relative to the time constants of the system.
 
 See also `c2d_x0map`
 """
-c2d(sys::StateSpace, Ts::Real, method::Symbol=:zoh) = c2d_x0map(sys, Ts, method)[1]
+c2d(sys::StateSpace, Ts::Real, method::Symbol=:zoh; kwargs...) = c2d_x0map(sys, Ts, method; kwargs...)[1]
 
 
 """
-    sysd, x0map = c2d_x0map(sys::StateSpace, Ts, method=:zoh)
+    sysd, x0map = c2d_x0map(sys::StateSpace, Ts, method=:zoh; a=sys.Ts/2)
 
 Returns the discretization `sysd` of the system `sys` and a matrix `x0map` that
 transforms the initial conditions to the discrete domain by `x0_discrete = x0map*[x0; u0]`
 
 See `c2d` for further details."""
-function c2d_x0map(sys::StateSpace{Continuous}, Ts::Real, method::Symbol=:zoh)
+function c2d_x0map(sys::StateSpace{Continuous}, Ts::Real, method::Symbol=:zoh; a=Ts/2)
     A, B, C, D = ssdata(sys)
     T = promote_type(eltype.((A,B,C,D))...)
     ny, nu = size(sys)
@@ -66,7 +66,7 @@ function c2d_x0map(sys::StateSpace{Continuous}, Ts::Real, method::Symbol=:zoh)
 end
 
 """
-    d2c(sys::AbstractStateSpace{<:Discrete}, method::Symbol = :zoh)
+    d2c(sys::AbstractStateSpace{<:Discrete}, method::Symbol = :zoh; a=sys.Ts/2)
 
 Convert discrete-time system to a continuous time system, assuming that the discrete-time system was discretized using `method`. Available methods are `:zoh, :fwdeuler´.
 """
