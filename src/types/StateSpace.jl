@@ -291,7 +291,7 @@ function *(sys1::HeteroStateSpace, sys2::HeteroStateSpace)
     return HeteroStateSpace(A, B, C, D, timeevol)
 end
 
-*(sys::ST, n::Number) where ST <: AbstractStateSpace = StateSpace(sys.A, sys.B, sys.C*n, sys.D*n, sys.timeevol)
+*(sys::ST, n::Number) where ST <: AbstractStateSpace = StateSpace(sys.A, sys.B, typeof(sys.C)(sys.C*n), sys.D*n, sys.timeevol)
 *(n::Number, sys::AbstractStateSpace) = *(sys, n)
 
 ## DIVISION ##
