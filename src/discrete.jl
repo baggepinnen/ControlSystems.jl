@@ -2,7 +2,7 @@ export rstd, rstc, dab, c2d_roots2poly, c2d_poly2poly, zpconv#, lsima, indirect_
 
 
 """
-    sysd= c2d(sys::StateSpace, Ts, method=:zoh)
+    sysd= c2d(sys::AbstractStateSpace{<:Continuous}, Ts, method=:zoh)
     Gd = c2d(G::TransferFunction, Ts, method=:zoh)
 
 Convert the continuous-time system `sys` into a discrete-time system with sample time
@@ -12,7 +12,7 @@ relative to the time constants of the system.
 
 See also `c2d_x0map`
 """
-c2d(sys::StateSpace, Ts::Real, method::Symbol=:zoh; kwargs...) = c2d_x0map(sys, Ts, method; kwargs...)[1]
+c2d(sys::AbstractStateSpace{<:Continuous}, Ts::Real, method::Symbol=:zoh; kwargs...) = c2d_x0map(sys, Ts, method; kwargs...)[1]
 
 
 """
@@ -22,7 +22,7 @@ Returns the discretization `sysd` of the system `sys` and a matrix `x0map` that
 transforms the initial conditions to the discrete domain by `x0_discrete = x0map*[x0; u0]`
 
 See `c2d` for further details."""
-function c2d_x0map(sys::StateSpace{Continuous}, Ts::Real, method::Symbol=:zoh; a=Ts/2)
+function c2d_x0map(sys::AbstractStateSpace{<:Continuous}, Ts::Real, method::Symbol=:zoh; a=Ts/2)
     A, B, C, D = ssdata(sys)
     T = promote_type(eltype.((A,B,C,D))...)
     ny, nu = size(sys)
@@ -54,7 +54,8 @@ function c2d_x0map(sys::StateSpace{Continuous}, Ts::Real, method::Symbol=:zoh; a
         AI = (I(nx)-a*A)
         Ad = AI\(I(nx)+a*A)
         Bd = 2a*(AI\B)
-        Cd = C/AI
+        # Cd = C/AI
+        Cd = C*inv(AI) # Temporary fix only to make it work with Symbolics.jl https://github.com/JuliaSymbolics/Symbolics.jl/issues/121
         Dd = a*Cd*B + D
         x0map = I(nx)
     elseif method === :matched
