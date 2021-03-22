@@ -55,7 +55,7 @@ function c2d_x0map(sys::AbstractStateSpace{<:Continuous}, Ts::Real, method::Symb
         Ad = AI\(I(nx)+a*A)
         Bd = 2a*(AI\B)
         # Cd = C/AI
-        Cd = C*inv(AI) # Temporary fix only to make it work with Symbolics.jl https://github.com/JuliaSymbolics/Symbolics.jl/issues/121
+        Cd = C/AI 
         Dd = a*Cd*B + D
         x0map = I(nx)
     elseif method === :matched
@@ -83,6 +83,7 @@ function d2c(sys::AbstractStateSpace{<:Discrete}, method::Symbol=:zoh; a=sys.Ts/
         if eltype(A) <: Real
             Ac,Bc = real.((Ac, Bc))
         end
+        Cc, Dc = C, D
     elseif method === :fwdeuler
         Ac = (A-I)./sys.Ts
         Bc = B./sys.Ts
