@@ -165,9 +165,9 @@ end
 @userplot Stepplot
 @userplot Impulseplot
 """
-    stepplot(sys[, Tf]; kwargs...) or stepplot(sys[, t]; kwargs...)
+    stepplot(sys[, tfinal]; kwargs...) or stepplot(sys[, t]; kwargs...)
 
-Plot step response of  `sys` until final time `Tf` or at time points in the vector `t`.
+Plot step response of  `sys` until final time `tfinal` or at time points in the vector `t`.
 If not defined, suitable values are chosen based on `sys`.
 See also [`step`](@ref)
 
@@ -176,9 +176,9 @@ See also [`step`](@ref)
 stepplot
 
 """
-    impulseplot(sys[, Tf]; kwargs...) or impulseplot(sys[, t]; kwargs...)
+    impulseplot(sys[, tfinal]; kwargs...) or impulseplot(sys[, t]; kwargs...)
 
-Plot impulse response of `sys` until final time `Tf` or at time points in the vector `t`.
+Plot impulse response of `sys` until final time `tfinal` or at time points in the vector `t`.
 If not defined, suitable values are chosen based on `sys`.
 See also [`impulse`](@ref)
 
