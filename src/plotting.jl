@@ -129,10 +129,8 @@ method is chosen based on the smoothness of the input signal. Optionally, the
 lsimplot
 
 @recipe function lsimplot(p::Lsimplot; method=nothing)
-    if length(p.args) < 3
-        error("Wrong number of arguments")
-    end
-    systems,u,t = p.args[1:3]
+
+    systems,u = p.args[1:2]
 
     if !isa(systems,AbstractArray)
         systems = [systems]
