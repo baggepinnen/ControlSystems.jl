@@ -1,5 +1,5 @@
 """
-    lqr(A, B, Q, R)
+    lqr(A, B, Q, R[, S])
 
 Calculate the optimal gain matrix `K` for the state-feedback law `u = -K*x` that
 minimizes the cost function:
@@ -64,7 +64,7 @@ function kalman(sys::StateSpace, R1,R2, args...; kwargs...)
     if iscontinuous(sys)
         return Matrix(lqr(sys.A', sys.C', R1,R2, args...; kwargs...)')
     else
-        return Matrix(dlqr(sys.A', sys.C', R1,R2)')
+        return Matrix(dlqr(sys.A', sys.C', R1,R2, args...; kwargs...)')
     end
 end
 
@@ -101,15 +101,16 @@ y, t, x, uout = lsim(sys,u,t,x0=x0)
 plot(t,x, lab=["Position"  "Velocity"], xlabel="Time [s]")
 ```
 """
-function dlqr(A, B, Q, R)
-    S = dare(A, B, Q, R)
-    K = (B'*S*B + R)\(B'S*A)
+function dlqr(A, B, Q, R, args...; kwargs...)
+    # S = dare(A, B, Q, R)
+    # K = (B'*S*B + R)\(B'S*A)
+    S, _, K = ared(A, B, R, Q, args...; kwargs...)
     return K
 end
 
 function dlqr(sys::StateSpace, Q, R)
     !isdiscrete(sys) && throw(ArgumentError("Input argument sys must be discrete-time system"))
-    return dlqr(sys.A, sys.B, Q, R)
+    return dlqr(sys.A, sys.B, Q, R, args...; kwargs...)
 end
 
 """
@@ -119,7 +120,7 @@ end
 Calculate the optimal Kalman gain for discrete time systems
 
 """
-dkalman(A, C, R1,R2) = Matrix(dlqr(A',C',R1,R2)')
+dkalman(A, C, R1,R2, args...; kwargs...) = Matrix(dlqr(A',C',R1,R2, args...; kwargs...)')
 
 """
     place(A, B, p)
