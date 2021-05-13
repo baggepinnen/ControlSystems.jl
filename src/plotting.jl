@@ -313,6 +313,7 @@ bodeplot
                     xguide    --> (hz ? "Frequency [Hz]" : "Frequency [rad/s]")
                     label     --> "\$G_{$(si)}\$"
                     group     --> group_ind
+                    title      := ""
                     ws, unwrap ? ControlSystems.unwrap(phasedata.*(pi/180)).*(180/pi) : phasedata
                 end
 
