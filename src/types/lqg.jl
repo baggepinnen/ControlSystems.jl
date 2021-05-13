@@ -323,7 +323,12 @@ function gangoffourplot(G::LQG, args...; kwargs...)
     Plots.plot(f1,f2,f3,f4)
 end
 
+innovation_form(G::LQG) = innovation_form(G.sys, G.K)
 
+function innovation_form(sys::AbstractStateSpace, K::AbstractArray)
+    A,B,C,D = ssdata(sys)
+    ss(A-K*C, [B K], C, [D zeros(size(D,1), size(K, 2))], sys.timeevol)
+end
 
 # function gangoffourplot(G::LQG, args...)
 #     S,D,N,T = gangoffour(G)
