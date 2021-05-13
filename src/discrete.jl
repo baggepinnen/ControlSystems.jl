@@ -2,7 +2,7 @@ export rstd, rstc, dab, c2d_roots2poly, c2d_poly2poly, zpconv#, lsima, indirect_
 
 
 """
-    sysd = c2d(sys::AbstractStateSpace{<:Continuous}, Ts, method=:zoh)
+    sysd = c2d(sys::AbstractStateSpace{<:Continuous}, Ts, method=:zoh; a=sys.Ts/2)
     Gd = c2d(G::TransferFunction{<:Continuous}, Ts, method=:zoh)
 
 Convert the continuous-time system `sys` into a discrete-time system with sample time
@@ -16,17 +16,13 @@ c2d(sys::AbstractStateSpace{<:Continuous}, Ts::Real, method::Symbol=:zoh; kwargs
 
 
 """
-    sysd, x0map = c2d_x0map(sys::StateSpace, Ts, method=:zoh; a=sys.Ts/2)
-c2d(sys::AbstractStateSpace{<:Continuous}, Ts::Real, method::Symbol=:zoh) = c2d_x0map(sys, Ts, method)[1]
-
-
-"""
     sysd, x0map = c2d_x0map(sys::AbstractStateSpace{<:Continuous}, Ts, method=:zoh)
 
 Returns the discretization `sysd` of the system `sys` and a matrix `x0map` that
 transforms the initial conditions to the discrete domain by `x0_discrete = x0map*[x0; u0]`
 
-See `c2d` for further details."""
+See `c2d` for further details.
+"""
 function c2d_x0map(sys::AbstractStateSpace{<:Continuous}, Ts::Real, method::Symbol=:zoh; a=Ts/2)
     A, B, C, D = ssdata(sys)
     T = promote_type(eltype.((A,B,C,D))...)
