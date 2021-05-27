@@ -633,7 +633,7 @@ function innovation_form(sys::ST, R1, R2) where ST <: AbstractStateSpace
     ST(sys.A, K, sys.C, Matrix{eltype(sys.A)}(I, sys.ny, sys.ny), sys.timeevol)
 end
 # Set D = I to get transfer function H = I + C(sI-A)\ K
-function innovation_form(sys::ST; sysw=I, syse=I, R1=I, R2=I) where ST <: AbstractStateSpace
+function innovation_form(sys::ST; sysw=ss(I(sys.nx)), syse=ss(I(sys.ny)), R1=I, R2=I) where ST <: AbstractStateSpace
 	K = kalman(sys, covar(sysw,R1), covar(syse, R2))
 	ST(sys.A, K, sys.C, Matrix{eltype(sys.A)}(I, sys.ny, sys.ny), sys.timeevol)
 end
@@ -643,7 +643,7 @@ end
     predictor(sys::AbstractStateSpace, K)
 
 Return the predictor system
-x̂' = (A - KC)x̂ + Bu + Ky
+x̂' = (A - KC)x̂ + (B-KD)u + Ky
 ŷ  = Cx + Du
 with the input equation [B K] * [u; y]
 
@@ -658,5 +658,5 @@ end
 
 function ControlSystems.predictor(sys, K::AbstractMatrix)
     A,B,C,D = ssdata(sys)
-    ss(A-K*C, [B K], C, [D zeros(size(D,1), size(K, 2))], sys.timeevol)
+    ss(A-K*C, [B-K*D K], C, [D zeros(size(D,1), size(K, 2))], sys.timeevol)
 end
