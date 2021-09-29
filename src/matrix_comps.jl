@@ -492,7 +492,7 @@ end
 
 
 """
-    sysr, G, T = baltrunc(sys::StateSpace; atol = √ϵ, rtol=1e-3, unitgain=true, n = nothing)
+    sysr, G, T = baltrunc(sys::StateSpace; atol = √ϵ, rtol=1e-3, unitgain=false, n = nothing)
 
 Reduces the state dimension by calculating a balanced realization of the system sys, such that the observability and reachability gramians of the balanced system are equal and diagonal `G`, and truncating it to order `n`. If `n` is not provided, it's chosen such that all states corresponding to singular values less than `atol` and less that `rtol σmax` are removed.
 
@@ -504,7 +504,7 @@ See also `gram`, `balreal`
 
 Glad, Ljung, Reglerteori: Flervariabla och Olinjära metoder
 """
-function baltrunc(sys::ST; atol = sqrt(eps()), rtol = 1e-3, unitgain = true, n = nothing) where ST <: AbstractStateSpace
+function baltrunc(sys::ST; atol = sqrt(eps()), rtol = 1e-3, unitgain = false, n = nothing) where ST <: AbstractStateSpace
     sysbal, S, T = balreal(sys)
     S = diag(S)
     if n === nothing
@@ -522,7 +522,7 @@ function baltrunc(sys::ST; atol = sqrt(eps()), rtol = 1e-3, unitgain = true, n =
         D = D/(C*inv(-A)*B)
     end
 
-    return ST(A,B,C,D,sys.timeevol), diagm(S), T
+    return ST(A,B,C,D,sys.timeevol), diagm(0 => S), T
 end
 
 """
@@ -684,7 +684,7 @@ function innovation_form(sys::ST, R1, R2) where ST <: AbstractStateSpace
     ST(sys.A, K, sys.C, Matrix{eltype(sys.A)}(I, sys.ny, sys.ny), sys.timeevol)
 end
 # Set D = I to get transfer function H = I + C(sI-A)\ K
-function innovation_form(sys::ST; sysw=ss(I(sys.nx)), syse=ss(I(sys.ny)), R1=I, R2=I) where ST <: AbstractStateSpace
+function innovation_form(sys::ST; sysw=ss(1.0*I(sys.nx), sys.timeevol), syse=ss(1.0*I(sys.ny), sys.timeevol), R1=1.0*I, R2=1.0*I) where ST <: AbstractStateSpace
 	K = kalman(sys, covar(sysw,R1), covar(syse, R2))
 	ST(sys.A, K, sys.C, Matrix{eltype(sys.A)}(I, sys.ny, sys.ny), sys.timeevol)
 end
